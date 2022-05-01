@@ -7,6 +7,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.support.annotation.Nullable;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -63,12 +65,12 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
         ContentValues values = new ContentValues();
 
-        values.put(USER_ACCOUNT_NO, transaction.getAccountNo());
-        values.put(USER_ACCOUNT_HOLDER_NAME,account.getAccountHolderName());
-        values.put(USER_BANK_NAME,account.getBankName());
-        values.put(USER_BALANCE,account.getBalance());
+        //DATE,ENUM
+        values.put(TRANSACTION_DATE,transaction.getDate().toString());
+        values.put(TRANSACTION_ACCOUNT_NO,transaction.getAccountNo());
+        values.put(TRANSACTION_EXPENSE_TYPE,transaction.getExpenseType().name());
+        values.put(TRANSACTION_AMOUNT,transaction.getAmount());
 
-        // Insert the new row, returning the primary key value of the new row
         long newRowId = sqLiteDatabase.insert(TRANSACTION_TABLE, null, values);
 
         if (newRowId == -1){
@@ -78,6 +80,34 @@ public class DataBaseHelper extends SQLiteOpenHelper {
             return true;
     }
 
+
+    public List <Transaction> getAllTransactionLogs() throws ParseException {
+        List<Transaction> transactionLogsList =new ArrayList<>();
+
+        String queryString = "SELECT * FROM " + TRANSACTION_TABLE;
+        SQLiteDatabase sqLiteDatabase = this.getReadableDatabase();
+        Cursor cursor = sqLiteDatabase.rawQuery(queryString,null);
+
+        if (cursor.moveToFirst()){
+            do{ int transactionID =cursor.getInt(0);
+                Date transactionDate = new SimpleDateFormat("dd/MM/yyyy").parse(cursor.getString(1));
+                String accountNO = cursor.getString(2);
+                ExpenseType expenseType =Enum.valueOf(ExpenseType.class,cursor.getString(3));
+                double amount = cursor.getDouble(4);
+
+                Transaction newtransaction = new Transaction(transactionDate,accountNO,expenseType,amount);
+                transactionLogsList.add(newtransaction);
+
+            }
+            while(cursor.moveToNext());
+        }
+        cursor.close();
+        sqLiteDatabase.close();
+        return transactionLogsList;
+    }
+
+
+    //USER ACCOUNT TABLE
 
     public boolean addOne(Account account){
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
@@ -101,7 +131,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
     public List <Account> getAccountsList(){
         List<Account> accountList =new ArrayList<>();
 
-        String queryString = "SELECT * FROM " + TRANSACTION_TABLE;
+        String queryString = "SELECT * FROM " + USER_TABLE;
         SQLiteDatabase sqLiteDatabase = this.getReadableDatabase();
         Cursor cursor = sqLiteDatabase.rawQuery(queryString,null);
 
@@ -126,7 +156,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
     public ArrayList getAccountNumbersList(){
         ArrayList accountList =new ArrayList<>();
 
-        String queryString = "SELECT "+ USER_ID +" ,"+ USER_ACCOUNT_NO +" FROM " + TRANSACTION_TABLE;
+        String queryString = "SELECT "+ USER_ID +" ,"+ USER_ACCOUNT_NO +" FROM " + USER_TABLE;
         SQLiteDatabase sqLiteDatabase = this.getReadableDatabase();
         Cursor cursor = sqLiteDatabase.rawQuery(queryString,null);
 
@@ -148,7 +178,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         String[] selectionArgs = { accountNo };
 
         SQLiteDatabase sqLiteDatabase = this.getReadableDatabase();
-        Cursor cursor = sqLiteDatabase.query(TRANSACTION_TABLE,null,selection,selectionArgs,null,null,null,null);
+        Cursor cursor = sqLiteDatabase.query(USER_TABLE,null,selection,selectionArgs,null,null,null,null);
 
         if (cursor.moveToFirst()){
             int columnID =cursor.getInt(0);
@@ -174,7 +204,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         String[] selectionArgs = {accountNo};
 
         SQLiteDatabase sqLiteDatabase = this.getReadableDatabase();
-        Cursor cursor = sqLiteDatabase.query(TRANSACTION_TABLE, null, selection, selectionArgs, null, null, null, null);
+        Cursor cursor = sqLiteDatabase.query(USER_TABLE, null, selection, selectionArgs, null, null, null, null);
 
         if (cursor.moveToFirst()) {
 
@@ -191,7 +221,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
     public boolean deleteOne (String accountNO){
 
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
-        String  queryString ="DELETE FROM "+ TRANSACTION_TABLE +" WHERE "+ USER_ACCOUNT_NO +" = " + accountNO;
+        String  queryString ="DELETE FROM "+ USER_TABLE +" WHERE "+ USER_ACCOUNT_NO +" = " + accountNO;
         Cursor cursor =sqLiteDatabase.rawQuery(queryString,null);
 
         if(cursor.moveToFirst()){

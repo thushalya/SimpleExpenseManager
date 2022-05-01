@@ -1,5 +1,6 @@
 package lk.ac.mrt.cse.dbs.simpleexpensemanager.data.impl;
 
+import java.text.ParseException;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -23,16 +24,17 @@ public class PersistentTransactionDAO implements TransactionDAO {
     @Override
     public void logTransaction(Date date, String accountNo, ExpenseType expenseType, double amount) {
         Transaction transaction = new Transaction(date, accountNo, expenseType, amount);
-        transactions.add(transaction);
+        dataBaseHelper.addTransaction(transaction);
     }
 
     @Override
-    public List<Transaction> getAllTransactionLogs() {
-        return transactions;
+    public List<Transaction> getAllTransactionLogs() throws ParseException {
+        return dataBaseHelper.getAllTransactionLogs();
     }
 
     @Override
-    public List<Transaction> getPaginatedTransactionLogs(int limit) {
+    public List<Transaction> getPaginatedTransactionLogs(int limit) throws ParseException {
+        List<Transaction> transactions=dataBaseHelper.getAllTransactionLogs();
         int size = transactions.size();
         if (size <= limit) {
             return transactions;
