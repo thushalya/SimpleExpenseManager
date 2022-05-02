@@ -1,8 +1,5 @@
 package lk.ac.mrt.cse.dbs.simpleexpensemanager.data.impl;
 
-import android.content.ContentValues;
-import android.widget.Toast;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,19 +7,18 @@ import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.AccountDAO;
 import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.exception.InvalidAccountException;
 import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.model.Account;
 import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.model.ExpenseType;
-import lk.ac.mrt.cse.dbs.simpleexpensemanager.ui.DataBaseHelper;
-import lk.ac.mrt.cse.dbs.simpleexpensemanager.ui.MainActivity;
+import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.DataBaseHelper;
 
 public class PersistentAccountDAO implements AccountDAO {
-    private DataBaseHelper dataBaseHelper;
+    private final DataBaseHelper dataBaseHelper;
 
     public PersistentAccountDAO(DataBaseHelper dataBaseHelper) {
-        this.dataBaseHelper=dataBaseHelper;
+        this.dataBaseHelper = dataBaseHelper;
     }
 
     @Override
     public List<String> getAccountNumbersList() {
-        return new ArrayList<>(dataBaseHelper.getAccountNumbersList());
+        return (dataBaseHelper.getAccountNumbersList());
     }
 
     @Override
@@ -41,18 +37,13 @@ public class PersistentAccountDAO implements AccountDAO {
 
     @Override
     public void addAccount(Account account) {
-        
         dataBaseHelper.addOne(account);
-
     }
 
     @Override
     public void removeAccount(String accountNo) throws InvalidAccountException {
-        if (!dataBaseHelper.deleteOne(accountNo)) {
-            String msg = "Account " + accountNo + " is invalid.";
-            throw new InvalidAccountException(msg);
-        }
-        //accounts.remove(accountNo);
+        this.getAccount(accountNo);
+        dataBaseHelper.deleteOne(accountNo);
     }
 
     @Override
@@ -62,7 +53,6 @@ public class PersistentAccountDAO implements AccountDAO {
             throw new InvalidAccountException(msg);
         }
         Account account = dataBaseHelper.getAccount(accountNo);
-        // specific implementation based on the transaction type
         switch (expenseType) {
             case EXPENSE:
                 account.setBalance(account.getBalance() - amount);
