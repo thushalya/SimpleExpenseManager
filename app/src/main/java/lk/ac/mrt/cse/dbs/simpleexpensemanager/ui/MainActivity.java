@@ -67,8 +67,7 @@ public class MainActivity extends AppCompatActivity {
         tabLayout.setupWithViewPager(mViewPager);
 
         /***  Begin generating dummy data for In-Memory implementation  ***/
-        DataBaseHelper dataBaseHelper =new DataBaseHelper(MainActivity.this);
-        TransactionTable transactionTable =new TransactionTable(MainActivity.this);
+        DataBaseHelper dataBaseHelper =new DataBaseHelper(this);
         expenseManager = new PersistentExpenseManager(dataBaseHelper);
 
 

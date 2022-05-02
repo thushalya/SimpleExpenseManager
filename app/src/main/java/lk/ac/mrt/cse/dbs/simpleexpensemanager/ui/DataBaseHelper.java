@@ -33,18 +33,29 @@ public class DataBaseHelper extends SQLiteOpenHelper {
     public static final String TRANSACTION_AMOUNT = "Amount";
 
     public static final String SQL_CREATE_USER_ACCOUNT_ENTRIES =
-            "CREATE TABLE " + USER_TABLE + " (" + USER_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," + USER_ACCOUNT_NO + " TEXT," +
-                    USER_ACCOUNT_HOLDER_NAME + " TEXT," + USER_BANK_NAME + " TEXT," +
-                    USER_BALANCE + " FLOAT)";
+//            "CREATE TABLE " + USER_TABLE + " (" + USER_ID + " INT PRIMARY KEY,"   + USER_BANK_NAME + " TEXT," +
+//                    USER_ACCOUNT_HOLDER_NAME + " TEXT," + USER_BANK_NAME + " TEXT," +
+//                    USER_BALANCE + " FLOAT)";
+            String.format("CREATE TABLE %s(%s text PRIMARY KEY, %s text, %s text, %s real);",
+                    USER_TABLE, USER_ACCOUNT_NO,
+                    USER_BANK_NAME,
+                    USER_ACCOUNT_HOLDER_NAME,
+                    USER_BALANCE);
+
 
     //DATE
     //FLOAT
     //AUTOINCREMENT
 
     public static final String SQL_CREATE_TRANSACTION_ENTRIES =
-            "CREATE TABLE " + TRANSACTION_TABLE + " (" + TRANSACTION_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," + TRANSACTION_DATE + " TEXT," +
+            "CREATE TABLE " + TRANSACTION_TABLE + " (" + TRANSACTION_ID + " INT PRIMARY KEY ," + TRANSACTION_DATE + " TIMESTAMP," +
                     TRANSACTION_ACCOUNT_NO + " TEXT," + TRANSACTION_EXPENSE_TYPE + " TEXT," +
-                    TRANSACTION_AMOUNT + " FLOAT)";
+                    TRANSACTION_AMOUNT + " REAL)";
+
+    public static final String SQL_DROP_USER_ENTRIES =
+       "DROP TABLE IF EXISTS " + USER_TABLE;
+    public static final String SQL_DROP_TRANSACTION_ENTRIES =
+            "DROP TABLE IF EXISTS " + TRANSACTION_TABLE;
 
     public DataBaseHelper(@Nullable Context context) {
         super(context, "expensemanager.db", null, 1);
@@ -55,18 +66,22 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         sqLiteDatabase.execSQL(SQL_CREATE_USER_ACCOUNT_ENTRIES);
         sqLiteDatabase.execSQL(SQL_CREATE_TRANSACTION_ENTRIES);
 
+
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
+        sqLiteDatabase.execSQL(SQL_DROP_USER_ENTRIES);
+        sqLiteDatabase.execSQL(SQL_DROP_TRANSACTION_ENTRIES);
+        onCreate(sqLiteDatabase);
 
     }
-    public boolean addTransaction(Transaction transaction){
+    public boolean logTransaction(Transaction transaction){
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
         ContentValues values = new ContentValues();
 
         //DATE,ENUM
-        values.put(TRANSACTION_DATE,transaction.getDate().toString());
+        values.put(TRANSACTION_DATE,transaction.getDate().getTime());
         values.put(TRANSACTION_ACCOUNT_NO,transaction.getAccountNo());
         values.put(TRANSACTION_EXPENSE_TYPE,transaction.getExpenseType().name());
         values.put(TRANSACTION_AMOUNT,transaction.getAmount());
@@ -88,19 +103,17 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase sqLiteDatabase = this.getReadableDatabase();
         Cursor cursor = sqLiteDatabase.rawQuery(queryString,null);
 
-        if (cursor.moveToFirst()){
-            do{ int transactionID =cursor.getInt(0);
-                Date transactionDate = new SimpleDateFormat("dd/MM/yyyy").parse(cursor.getString(1));
-                String accountNO = cursor.getString(2);
-                ExpenseType expenseType =Enum.valueOf(ExpenseType.class,cursor.getString(3));
-                double amount = cursor.getDouble(4);
+        while(cursor.moveToNext());{
 
-                Transaction newtransaction = new Transaction(transactionDate,accountNO,expenseType,amount);
-                transactionLogsList.add(newtransaction);
+            long time = cursor.getLong(cursor.getColumnIndexOrThrow(TRANSACTION_DATE));
+            String accountNO = cursor.getString(cursor.getColumnIndexOrThrow(TRANSACTION_ACCOUNT_NO));
+            String expenseType =cursor.getString(cursor.getColumnIndexOrThrow(TRANSACTION_EXPENSE_TYPE));
+            double amount = cursor.getDouble( cursor.getColumnIndexOrThrow(TRANSACTION_AMOUNT));
 
-            }
-            while(cursor.moveToNext());
+            Transaction newtransaction = new Transaction(new Date(time),accountNO,ExpenseType.valueOf(expenseType),amount);
+            transactionLogsList.add(newtransaction);
         }
+
         cursor.close();
         sqLiteDatabase.close();
         return transactionLogsList;
@@ -119,7 +132,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         values.put(USER_BALANCE,account.getBalance());
 
         // Insert the new row, returning the primary key value of the new row
-        long newRowId = sqLiteDatabase.insert(TRANSACTION_TABLE, null, values);
+        long newRowId = sqLiteDatabase.insert(USER_TABLE, null, values);
 
         if (newRowId == -1){
             return  false;
@@ -156,17 +169,16 @@ public class DataBaseHelper extends SQLiteOpenHelper {
     public ArrayList getAccountNumbersList(){
         ArrayList accountList =new ArrayList<>();
 
-        String queryString = "SELECT "+ USER_ID +" ,"+ USER_ACCOUNT_NO +" FROM " + USER_TABLE;
+        String queryString = "SELECT "+ USER_ACCOUNT_NO +" FROM " + USER_TABLE;
         SQLiteDatabase sqLiteDatabase = this.getReadableDatabase();
         Cursor cursor = sqLiteDatabase.rawQuery(queryString,null);
 
-        if (cursor.moveToFirst()){
-            do{ int columnID =cursor.getInt(0);
-                String accountNO = cursor.getString(1);
+
+        while(cursor.moveToNext());{
+                String accountNO = cursor.getString(cursor.getColumnIndexOrThrow(USER_ACCOUNT_NO));
                 accountList.add(accountNO);
-            }
-            while(cursor.moveToNext());
         }
+
         cursor.close();
         sqLiteDatabase.close();
         return accountList;
@@ -181,11 +193,10 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         Cursor cursor = sqLiteDatabase.query(USER_TABLE,null,selection,selectionArgs,null,null,null,null);
 
         if (cursor.moveToFirst()){
-            int columnID =cursor.getInt(0);
-            String accountNO = cursor.getString(1);
-            String accountHolderName = cursor.getString(2);
-            String bankName =cursor.getString(3);
-            double balance = cursor.getDouble(4);
+            String accountNO = cursor.getString(cursor.getColumnIndexOrThrow(USER_ACCOUNT_NO));
+            String accountHolderName = cursor.getString(cursor.getColumnIndexOrThrow(USER_ACCOUNT_HOLDER_NAME));
+            String bankName =cursor.getString(cursor.getColumnIndexOrThrow(USER_BANK_NAME));
+            double balance = cursor.getDouble(cursor.getColumnIndexOrThrow(USER_BALANCE));
             cursor.close();
             sqLiteDatabase.close();
             return new Account(accountNO,accountHolderName,bankName,balance);
@@ -235,10 +246,19 @@ public class DataBaseHelper extends SQLiteOpenHelper {
             return false;
         }
 
+    }
 
+    public void updateBalance(Account account){
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(USER_BALANCE, account.getBalance());
+
+        sqLiteDatabase.update(USER_TABLE, values,
+                USER_ACCOUNT_NO + " = ?", new String[]{account.getAccountNo()});
 
 
     }
+
 
 
 

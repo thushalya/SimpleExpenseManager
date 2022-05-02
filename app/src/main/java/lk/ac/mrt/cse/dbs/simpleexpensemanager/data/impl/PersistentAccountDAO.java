@@ -71,6 +71,6 @@ public class PersistentAccountDAO implements AccountDAO {
                 account.setBalance(account.getBalance() + amount);
                 break;
         }
-        dataBaseHelper.addOne(account);
+        dataBaseHelper.updateBalance(account);
     }
 }

@@ -32,8 +32,6 @@ lk/ac/mrt/cse/dbs/simpleexpensemanager/BuildConfig.java
  lk.ac.mrt.cse.dbs.simpleexpensemanager.BuildConfig
 lk/ac/mrt/cse/dbs/simpleexpensemanager/data/exception/InvalidAccountException.java
  lk.ac.mrt.cse.dbs.simpleexpensemanager.data.exception.InvalidAccountException
-lk/ac/mrt/cse/dbs/simpleexpensemanager/ui/TransactionTable.java
- lk.ac.mrt.cse.dbs.simpleexpensemanager.ui.TransactionTable
 lk/ac/mrt/cse/dbs/simpleexpensemanager/data/AccountDAO.java
  lk.ac.mrt.cse.dbs.simpleexpensemanager.data.AccountDAO
 lk/ac/mrt/cse/dbs/simpleexpensemanager/control/exception/ExpenseManagerException.java
