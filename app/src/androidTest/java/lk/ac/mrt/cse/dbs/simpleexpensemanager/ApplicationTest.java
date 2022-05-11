@@ -26,6 +26,9 @@ import android.content.Context;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.nio.channels.AcceptPendingException;
+import java.text.ParseException;
+import java.util.Date;
 import java.util.List;
 import static org.junit.Assert.assertTrue;
 import androidx.test.core.app.ApplicationProvider;
@@ -33,25 +36,60 @@ import androidx.test.core.app.ApplicationProvider;
 import lk.ac.mrt.cse.dbs.simpleexpensemanager.control.ExpenseManager;
 import lk.ac.mrt.cse.dbs.simpleexpensemanager.control.PersistentExpenseManager;
 import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.DataBaseHelper;
+import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.exception.InvalidAccountException;
+import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.model.Account;
+import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.model.ExpenseType;
+import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.model.Transaction;
 
 /**
  * <a href="http://d.android.com/tools/testing/testing_android.html">Testing Fundamentals</a>
  */
 public class ApplicationTest {
+    private DataBaseHelper dataBaseHelper;
     private ExpenseManager expenseManager;
 
     @Before
     public void setUp(){
         Context context = ApplicationProvider.getApplicationContext();
-        DataBaseHelper dataBaseHelper=new DataBaseHelper(context);
+        dataBaseHelper=new DataBaseHelper(context);
         expenseManager = new PersistentExpenseManager(dataBaseHelper);
     }
 
     @Test
     public void testAddAccount(){
-        expenseManager.addAccount("1234","BOC","Thushalya",1000);
-        List<String> accountNumbers =expenseManager.getAccountNumbersList();
+        Account account =new Account("1234","BOC","Thushalya",1000);
+        dataBaseHelper.addOne(account);
+        List<String> accountNumbers =dataBaseHelper.getAccountNumbersList();
         assertTrue(accountNumbers.contains("1234"));
+    }
+
+
+    @Test
+    public void testLogTransactionExpense() throws ParseException {
+        try {
+            int  countOfLogsBefore = dataBaseHelper.getAllTransactionLogs().size();
+            expenseManager.updateAccountBalance("4567", 15, 01, 2022, ExpenseType.EXPENSE, "2500");
+            int countOfLogsafter = dataBaseHelper.getAllTransactionLogs().size();
+            assertTrue( countOfLogsBefore + 1 == countOfLogsafter);
+        } catch (InvalidAccountException e) {
+            e.printStackTrace();
+        }
 
     }
+
+    @Test
+    public void testLogTransactionIncome() throws ParseException {
+        try {
+            int countOfLogsBefore = dataBaseHelper.getAllTransactionLogs().size();
+            expenseManager.updateAccountBalance("8906", 15, 01, 2022, ExpenseType.INCOME, "3000");
+            int countOfLogsafter = dataBaseHelper.getAllTransactionLogs().size();
+            assertTrue(countOfLogsBefore + 1 == countOfLogsafter);
+        } catch (InvalidAccountException e) {
+            e.printStackTrace();
+        }
+
+
+    }
+    
+
 }

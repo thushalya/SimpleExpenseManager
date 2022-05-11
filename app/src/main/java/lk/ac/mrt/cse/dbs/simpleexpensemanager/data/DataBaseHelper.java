@@ -86,6 +86,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         String queryString = "SELECT * FROM " + TRANSACTION_TABLE;
         SQLiteDatabase sqLiteDatabase = this.getReadableDatabase();
         Cursor cursor = sqLiteDatabase.rawQuery(queryString, null);
+//        Cursor cursor =sqLiteDatabase.query(TRANSACTION_TABLE,null,null,null,null,null,null,null);
 
         while (cursor.moveToNext()) {
 
